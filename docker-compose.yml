@@ -1,14 +1,29 @@
-﻿version: '3.8'
-
-services:
-  web:
-    build: .
+﻿services:
+  pythonstatusserver:
+    build:
+      context: .
+      args:
+        DOCKER_GID: ${DOCKER_GID}
+    image: projectmakers/pythonstatusserver:latest
+    container_name: pythonstatusserver
     ports:
       - "${PORT}:${PORT}"
+    environment:
+      - USERNAME=${USERNAME}
+      - PASSWORD=${PASSWORD}
+      - PORT=${PORT}
+      - MONGO_USERNAME=${MONGO_USERNAME}
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_HOST=${MONGO_HOST}
+      - MONGO_PORT=${MONGO_PORT}
+      - MONGO_RULES=${MONGO_RULES}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      - mongodb
-    env_file:
-      - .env
     restart: unless-stopped
+    networks:
+      - ${DOCKER_NETWORK}
+
+networks:
+  pm_network:
+    external: true
+    name: ${DOCKER_NETWORK}

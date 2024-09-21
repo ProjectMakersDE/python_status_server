@@ -26,12 +26,12 @@ A Flask-based API for monitoring Docker containers, MongoDB status, and system r
 
 ## Prerequisites
 
-- Python 3.7+
 - Docker installed and running
 - MongoDB instance (local or remote)
-- [pip](https://pip.pypa.io/en/stable/) package manager
 
 ## Installation
+
+### Using Docker Compose
 
 1. **Clone the repository**
 
@@ -40,18 +40,15 @@ A Flask-based API for monitoring Docker containers, MongoDB status, and system r
    cd system-status-api
    ```
 
-2. **Create a virtual environment**
+2. **Create a `.env` file** (Refer to the Configuration section below for required variables)
+
+3. **Run Docker Compose**
 
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   docker-compose up -d
    ```
 
-3. **Install dependencies**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
+The API will be available at `http://0.0.0.0:5000/` unless you specified a different port in the `.env` file.
 
 ## Configuration
 
@@ -71,9 +68,19 @@ MONGO_PASSWORD=your_mongo_password
 MONGO_HOST=localhost
 MONGO_PORT=27017
 MONGO_RULES=?authSource=admin
+
+# Docker Configuration
+DOCKER_GID=999  # Replace with your actual Docker group GID
+DOCKER_NETWORK=network_name  # Optional: Specify the Docker network to use
 ```
 
-Note: Replace the placeholder values with your actual credentials and configuration.
+To get your Docker GID, execute the following command on your host:
+
+```bash
+getent group docker | cut -d: -f3
+```
+
+This ensures that the Docker container can access the Docker socket on the host.
 
 ### Example .env file
 
@@ -87,137 +94,55 @@ MONGO_PASSWORD=mongoPass
 MONGO_HOST=localhost
 MONGO_PORT=27017
 MONGO_RULES=?authSource=admin
+
+DOCKER_GID=999
+DOCKER_NETWORK=dockerNetwork
 ```
 
-## Usage
+## Docker Compose Configuration
 
-1. **Activate the virtual environment**
+The `docker-compose.yml` file should look like this:
 
-   ```bash
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
+```yaml
+services:
+  pythonstatusserver:
+    build:
+      context: .
+      args:
+        DOCKER_GID: ${DOCKER_GID}
+    image: projectmakers/pythonstatusserver:latest
+    container_name: pythonstatusserver
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - USERNAME=${USERNAME}
+      - PASSWORD=${PASSWORD}
+      - PORT=${PORT}
+      - MONGO_USERNAME=${MONGO_USERNAME}
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_HOST=${MONGO_HOST}
+      - MONGO_PORT=${MONGO_PORT}
+      - MONGO_RULES=${MONGO_RULES}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - ${DOCKER_NETWORK}
 
-2. **Start the Flask application**
-
-   ```bash
-   python app.py
-   ```
-
-The API will be available at http://0.0.0.0:5000/, unless you specified a different port in the `.env` file.
+networks:
+  pm_network:
+    external: true
+    name: ${DOCKER_NETWORK}
+```
 
 ## API Endpoints
 
-All endpoints require basic authentication using the USERNAME and PASSWORD defined in the `.env` file.
-
-### 1. Retrieve Docker Container Status
-
-- **Endpoint:** `/status/docker`
-- **Method:** `GET`
-- **Description:** Retrieves the status of all Docker containers.
-
-**Example Request:**
-
-```bash
-curl -u your_username:your_password http://localhost:5000/status/docker
-```
-
-**Example Response:**
-
-```json
-{
-  "container_name_1": "running",
-  "container_name_2": "exited",
-  ...
-}
-```
-
-### 2. Retrieve MongoDB Status
-
-- **Endpoint:** `/status/mongodb`
-- **Method:** `GET`
-- **Description:** Checks the connectivity and status of the MongoDB instance.
-
-**Example Request:**
-
-```bash
-curl -u your_username:your_password http://localhost:5000/status/mongodb
-```
-
-**Example Response:**
-
-```json
-{
-  "mongodb": "running"
-}
-```
-
-**Error Message:**
-
-```json
-{
-  "mongodb": "MongoDB connection error: mongodb://... || Error message"
-}
-```
-
-### 3. Retrieve System Status
-
-- **Endpoint:** `/status/system`
-- **Method:** `GET`
-- **Description:** Retrieves CPU usage, memory usage, and disk usage.
-
-**Example Request:**
-
-```bash
-curl -u your_username:your_password http://localhost:5000/status/system
-```
-
-**Example Response:**
-
-```json
-{
-  "cpu_percent": 23.5,
-  "memory": {
-    "total": 16777216,
-    "available": 8388608,
-    "percent": 50.0,
-    "used": 8388608,
-    "free": 8388608
-  },
-  "disk": {
-    "total": 500107862016,
-    "used": 250053931008,
-    "free": 250053931008,
-    "percent": 50.0
-  }
-}
-```
-
-## Environment Variables
-
-| Variable      | Description                                    | Default      |
-|---------------|------------------------------------------------|--------------|
-| USERNAME      | Username for API authentication                | —            |
-| PASSWORD      | Password for API authentication                | —            |
-| PORT          | Port on which the Flask app runs               | 5000         |
-| MONGO_USERNAME| Username for MongoDB authentication            | —            |
-| MONGO_PASSWORD| Password for MongoDB authentication            | —            |
-| MONGO_HOST    | Host address for MongoDB                       | —            |
-| MONGO_PORT    | Port number for MongoDB                        | 27017        |
-| MONGO_RULES   | Additional MongoDB connection parameters       | ?authSource=admin |
+Refer to the existing documentation for the API endpoints and their usage.
 
 ## Dependencies
 
-- Flask - Web framework for Python
-- docker - Docker SDK for Python
-- pymongo - MongoDB driver for Python
-- psutil - System and process utilities
-- python-dotenv - Load environment variables from a `.env` file
-
-Install all dependencies with:
-
-```bash
-pip install -r requirements.txt
-```
+- Docker - Required for running the API and accessing system status information
+- MongoDB - Required for MongoDB status monitoring
 
 ## License
 
@@ -225,15 +150,7 @@ This project is licensed under the MIT License.
 
 ## Contributing
 
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch: `git checkout -b feature/YourFeature`
-3. Commit your changes: `git commit -m "Add a feature"`
-4. Push to the branch: `git push origin feature/YourFeature`
-5. Open a Pull Request.
-
-Please make sure to update tests as appropriate and ensure the code adheres to the project's coding standards.
+Contributions are welcome! Please follow the steps mentioned above.
 
 ## Contact
 

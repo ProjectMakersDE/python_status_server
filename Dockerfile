@@ -1,41 +1,45 @@
-﻿# Basis-Image
+﻿# Base image
 FROM python:3.11
 
-# Arbeitsverzeichnis festlegen
+# Build argument for Docker group ID
+ARG DOCKER_GID
+
+# Set working directory
 WORKDIR /app
 
-# Systemabhängigkeiten installieren
+# Install system dependencies and create Docker group
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd -m pythonstatusserveruser
+    && groupadd -g ${DOCKER_GID} docker \
+    && useradd -m -G docker pythonstatusserveruser
 
-# Abhängigkeiten kopieren und installieren
+# Copy and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Anwendungscode kopieren
+# Copy application code
 COPY app.py .
 
-# Verzeichnisberechtigungen setzen
+# Set directory permissions
 RUN mkdir -p /app && \
     chown -R pythonstatusserveruser:pythonstatusserveruser /app && \
     chmod -R 755 /app
 
-# Benutzer wechseln
+# Switch to the new user
 USER pythonstatusserveruser
 
-# Umgebungsvariablen für Flask setzen
+# Set environment variables for Flask
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=5000
 
-# Port freigeben
+# Expose the port
 EXPOSE 5000
 
-# Docker-Socket mounten (für Zugriff auf Docker-Daemon)
+# Mount Docker socket (for access to Docker daemon)
 VOLUME /var/run/docker.sock:/var/run/docker.sock
 
-# Startbefehl
+# Start command
 CMD ["python", "app.py"]
