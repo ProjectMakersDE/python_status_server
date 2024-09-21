@@ -37,6 +37,8 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
+          build-args: |
+            DOCKER_GID=988
           tags: |
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/pythonstatusserver:${{ env.VERSION }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/pythonstatusserver:latest

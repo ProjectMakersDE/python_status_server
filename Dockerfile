@@ -1,8 +1,8 @@
 ﻿# Base image
 FROM python:3.11
 
-# Build argument for Docker group ID
-ARG DOCKER_GID
+# Build argument for Docker group ID with a default value
+ARG DOCKER_GID=999
 
 # Set working directory
 WORKDIR /app
