@@ -4,8 +4,9 @@ from pymongo import MongoClient
 import psutil
 import functools
 import os
-
+from dotenv import load_dotenv
 app = Flask(__name__)
+load_dotenv()
 
 # Credentials from environment variables
 USERNAME = os.getenv('USERNAME')
@@ -41,13 +42,10 @@ def requires_auth(f):
     return decorated
 
 
-# Docker-Client initialisation
-client = docker.from_env()
-
-
 @app.route('/status/docker')
 @requires_auth
 def docker_status():
+    client = docker.from_env()
     try:
         containers = client.containers.list()
         container_status = {container.name: container.status for container in containers}
