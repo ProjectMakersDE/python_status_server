@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/* \
-    useradd -m pythonstatusserveruser
+    && useradd -m pythonstatusserveruser
 
 # Abhängigkeiten kopieren und installieren
 COPY requirements.txt .
@@ -18,10 +18,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Anwendungscode kopieren
 COPY app.py .
 
+# Verzeichnisberechtigungen setzen
 RUN mkdir -p /app && \
     chown -R pythonstatusserveruser:pythonstatusserveruser /app && \
-    chmod -R 755 /app \
+    chmod -R 755 /app
 
+# Benutzer wechseln
 USER pythonstatusserveruser
 
 # Umgebungsvariablen für Flask setzen
