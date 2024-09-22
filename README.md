@@ -36,7 +36,7 @@ A Flask-based API for monitoring Docker containers, MongoDB status, and system r
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/system-status-api.git
+   git clone https://github.com/ProjectMakersDE/system-status-api.git
    cd system-status-api
    ```
 
@@ -151,7 +151,3 @@ This project is licensed under the MIT License.
 ## Contributing
 
 Contributions are welcome! Please follow the steps mentioned above.
-
-## Contact
-
-For questions or suggestions, please open an issue or contact your.email@example.com.
