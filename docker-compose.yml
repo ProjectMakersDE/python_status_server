@@ -1,9 +1,5 @@
-﻿services:
+services:
   pythonstatusserver:
-    build:
-      context: .
-      args:
-        DOCKER_GID: ${DOCKER_GID}
     image: projectmakers/pythonstatusserver:latest
     container_name: pythonstatusserver
     ports:
