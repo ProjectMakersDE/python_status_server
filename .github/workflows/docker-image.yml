@@ -1,9 +1,6 @@
 name: Push Docker Image to DockerHub
 
-on:
-  push:
-    branches:
-      - master
+on: workflow_dispatch
 
 jobs:
   dockerhub-push:
