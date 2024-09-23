@@ -16,4 +16,4 @@ fi
 usermod -aG docker pythonstatusserveruser
 
 # Execute the CMD
-exec gosu pythonstatusserveruser "$@"
+exec "$@"

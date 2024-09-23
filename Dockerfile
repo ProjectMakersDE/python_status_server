@@ -44,4 +44,7 @@ USER root
 
 # Set entrypoint and command
 ENTRYPOINT ["/entrypoint.sh"]
+
+USER pythonstatusserveruser
+
 CMD ["python", "app.py"]
