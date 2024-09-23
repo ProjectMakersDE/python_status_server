@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Add a non-root user
+# Add a non-root user (ohne Gruppe)
 RUN useradd -m pythonstatusserveruser
 
 # Copy and install Python dependencies
@@ -28,9 +28,6 @@ RUN mkdir -p /app && \
     chown -R pythonstatusserveruser:pythonstatusserveruser /app && \
     chmod -R 755 /app
 
-# Switch to a non-root user
-USER pythonstatusserveruser
-
 # Set environment variables for Flask
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
@@ -41,6 +38,9 @@ EXPOSE 5000
 
 # Mount Docker socket (for access to Docker daemon)
 VOLUME /var/run/docker.sock:/var/run/docker.sock
+
+# Switch to root for group creation
+USER root
 
 # Set entrypoint and command
 ENTRYPOINT ["/entrypoint.sh"]
