@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Add a non-root user (ohne Gruppe)
-RUN useradd -m pythonstatusserveruser
+# RUN useradd -m pythonstatusserveruser
 
 # Copy and install Python dependencies
 COPY requirements.txt .
@@ -24,9 +24,9 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Set directory permissions
-RUN mkdir -p /app && \
-    chown -R pythonstatusserveruser:pythonstatusserveruser /app && \
-    chmod -R 755 /app
+#RUN mkdir -p /app && \
+#    chown -R pythonstatusserveruser:pythonstatusserveruser /app && \
+#    chmod -R 755 /app
 
 # Set environment variables for Flask
 ENV FLASK_APP=app.py
@@ -40,11 +40,11 @@ EXPOSE 5000
 VOLUME /var/run/docker.sock:/var/run/docker.sock
 
 # Switch to root for group creation
-USER root
+#USER root
 
 # Set entrypoint and command
-ENTRYPOINT ["/entrypoint.sh"]
+#ENTRYPOINT ["/entrypoint.sh"]
 
-USER pythonstatusserveruser
+#USER pythonstatusserveruser
 
 CMD ["python", "app.py"]
