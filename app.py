@@ -9,15 +9,15 @@ app = Flask(__name__)
 load_dotenv()
 
 # Credentials from environment variables
-USERNAME = os.getenv('USERNAME')
-PASSWORD = os.getenv('PASSWORD')
-PORT = int(os.getenv('PORT', 5000))
+USERNAME = os.getenv('STATUS_SERVER_USERNAME')
+PASSWORD = os.getenv('STATUS_SERVER_PASSWORD')
+PORT = int(os.getenv('STATUS_SERVER_PORT', 5000))
 
 MONGO_USERNAME = os.getenv('MONGO_USERNAME')
 MONGO_PASSWORD = os.getenv('MONGO_PASSWORD')
-MONGO_HOST = os.getenv('MONGO_HOST')
+MONGO_HOST = 'mongodb'
 MONGO_PORT = int(os.getenv('MONGO_PORT', 27017))
-MONGO_RULES = os.getenv('MONGO_RULES', '?authSource=admin')
+MONGO_RULES = '?authSource=admin'
 
 
 def check_auth(username, password):

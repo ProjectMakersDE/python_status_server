@@ -3,23 +3,16 @@ services:
     image: projectmakers/pythonstatusserver:latest
     container_name: pythonstatusserver
     ports:
-      - "${PORT}:${PORT}"
-    environment:
-      - USERNAME=${USERNAME}
-      - PASSWORD=${PASSWORD}
-      - PORT=${PORT}
-      - MONGO_USERNAME=${MONGO_USERNAME}
-      - MONGO_PASSWORD=${MONGO_PASSWORD}
-      - MONGO_HOST=${MONGO_HOST}
-      - MONGO_PORT=${MONGO_PORT}
-      - MONGO_RULES=${MONGO_RULES}
+      - "${STATUS_SERVER_PORT}:${STATUS_SERVER_PORT}"
+    env_file:
+      - /usr/local/bin/env/statusServer.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
     networks:
-      - ${DOCKER_NETWORK}
+      - pm_network
 
 networks:
   pm_network:
     external: true
-    name: ${DOCKER_NETWORK}
+    name: pm_network
