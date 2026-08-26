@@ -1,0 +1,26 @@
+name: Security checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --upgrade pip pip-audit --requirement requirements.txt
+      - run: pip-audit --requirement requirements.txt
+      - run: STATUS_SERVER_USERNAME=test-user STATUS_SERVER_PASSWORD=test-password python -m unittest discover -s tests -v
+      - run: docker build --pull --tag python-status-server:ci .

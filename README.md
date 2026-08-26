@@ -1,153 +1,86 @@
-
 # System Status API
 
-A Flask-based API for monitoring Docker containers, MongoDB status, and system resources. This application provides secure endpoints to retrieve real-time information about your system's Docker containers, MongoDB instance, and overall system performance.
+Kleine, authentifizierte Status-API fuer Docker-Container, MongoDB und
+Systemressourcen. Das Container-Image basiert auf Python 3.13 und startet mit
+Gunicorn statt dem Flask-Entwicklungsserver.
 
-## Table of Contents
+## Endpunkte
 
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [API Endpoints](#api-endpoints)
-- [Environment Variables](#environment-variables)
-- [Dependencies](#dependencies)
-- [License](#license)
-- [Contributing](#contributing)
-- [Contact](#contact)
+| Endpoint | Authentifizierung | Zweck |
+| --- | --- | --- |
+| `GET /healthz` | nein | Prozess-/Container-Healthcheck; keine internen Details |
+| `GET /status/docker` | HTTP Basic Auth | Namen und Laufzustaende der Docker-Container |
+| `GET /status/mongodb` | HTTP Basic Auth | MongoDB-Verbindungstest |
+| `GET /status/system` | HTTP Basic Auth | CPU-, Speicher- und Plattennutzung |
 
-## Features
+Die API darf nicht unverschluesselt im Internet erreichbar sein. Der
+Compose-Standard bindet sie deshalb nur an `127.0.0.1`. Fuer Zugriff von
+ausserhalb ist ein HTTPS-Reverse-Proxy mit zusaetzlicher Zugriffskontrolle
+vorgesehen. `STATUS_SERVER_BIND_ADDRESS=0.0.0.0` ist nur in diesem Fall
+angebracht.
 
-- **Docker Status:** Retrieve the status of all Docker containers.
-- **MongoDB Status:** Check the connectivity and status of a MongoDB instance.
-- **System Status:** Retrieve real-time information on CPU, memory, and disk usage.
-- **Basic Authentication:** Secure the endpoints with a username and password.
+## Konfiguration
 
-## Prerequisites
-
-- Docker installed and running
-- MongoDB instance (local or remote)
-
-## Installation
-
-### Using Docker Compose
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/ProjectMakersDE/system-status-api.git
-   cd system-status-api
-   ```
-
-2. **Create a `.env` file** (Refer to the Configuration section below for required variables)
-
-3. **Run Docker Compose**
-
-   ```bash
-   docker-compose up -d
-   ```
-
-The API will be available at `http://0.0.0.0:5000/` unless you specified a different port in the `.env` file.
-
-## Configuration
-
-### Environment Variables
-
-Create a `.env` file in the project's root directory and define the following variables:
+Die beiden Zugangsdaten sind Pflicht. Der Dienst beendet sich beim Start, wenn
+eine davon fehlt, damit keine unklar konfigurierte API online geht.
 
 ```env
-# Flask App Configuration
-USERNAME=your_username
-PASSWORD=your_password
-PORT=5000
+STATUS_SERVER_USERNAME=status-reader
+STATUS_SERVER_PASSWORD=use-a-long-random-secret
+STATUS_SERVER_PORT=5000
 
-# MongoDB Configuration
-MONGO_USERNAME=your_mongo_username
-MONGO_PASSWORD=your_mongo_password
-MONGO_HOST=localhost
-MONGO_PORT=27017
-MONGO_RULES=?authSource=admin
-
-# Docker Configuration
-DOCKER_GID=999  # Replace with your actual Docker group GID
-DOCKER_NETWORK=network_name  # Optional: Specify the Docker network to use
-```
-
-To get your Docker GID, execute the following command on your host:
-
-```bash
-getent group docker | cut -d: -f3
-```
-
-This ensures that the Docker container can access the Docker socket on the host.
-
-### Example .env file
-
-```env
-USERNAME=admin
-PASSWORD=secret
-PORT=5000
+# Optional: bei Docker Compose standardmaessig 127.0.0.1
+STATUS_SERVER_BIND_ADDRESS=127.0.0.1
 
 MONGO_USERNAME=mongoUser
-MONGO_PASSWORD=mongoPass
-MONGO_HOST=localhost
+MONGO_PASSWORD=mongoPassword
+MONGO_HOST=mongodb
 MONGO_PORT=27017
 MONGO_RULES=?authSource=admin
 
-DOCKER_GID=999
-DOCKER_NETWORK=dockerNetwork
+# Optionales Gunicorn-Tuning
+GUNICORN_WORKERS=2
+GUNICORN_THREADS=4
+GUNICORN_TIMEOUT=30
 ```
 
-## Docker Compose Configuration
+`MONGO_USERNAME` und `MONGO_PASSWORD` muessen entweder beide gesetzt sein oder
+beide fehlen. Sonderzeichen in ihnen werden sicher URL-kodiert. Fehlerantworten
+enthalten keine Zugangsdaten, Verbindungszeichenfolgen oder internen
+Fehlerdetails.
 
-The `docker-compose.yml` file should look like this:
+## Start
 
-```yaml
-services:
-  pythonstatusserver:
-    build:
-      context: .
-      args:
-        DOCKER_GID: ${DOCKER_GID}
-    image: projectmakers/pythonstatusserver:latest
-    container_name: pythonstatusserver
-    ports:
-      - "${PORT}:${PORT}"
-    environment:
-      - USERNAME=${USERNAME}
-      - PASSWORD=${PASSWORD}
-      - PORT=${PORT}
-      - MONGO_USERNAME=${MONGO_USERNAME}
-      - MONGO_PASSWORD=${MONGO_PASSWORD}
-      - MONGO_HOST=${MONGO_HOST}
-      - MONGO_PORT=${MONGO_PORT}
-      - MONGO_RULES=${MONGO_RULES}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    restart: unless-stopped
-    networks:
-      - ${DOCKER_NETWORK}
+Die Produktions-Compose-Datei verwendet das veroeffentlichte Image:
 
-networks:
-  pm_network:
-    external: true
-    name: ${DOCKER_NETWORK}
+```bash
+docker compose up -d
 ```
 
-## API Endpoints
+Fuer eine lokale Image-Pruefung:
 
-Refer to the existing documentation for the API endpoints and their usage.
+```bash
+docker build --pull -t projectmakers/pythonstatusserver:local .
+```
 
-## Dependencies
+Das Mounten von `/var/run/docker.sock` ist erforderlich, damit der
+Docker-Endpunkt funktioniert. Es gewaehrt dem Dienst jedoch weitreichenden
+Host-Zugriff. Deshalb soll dieser Dienst ausschliesslich mit einem dedizierten,
+stark geschuetzten Docker-Zugang betrieben werden; ein Socket-Proxy mit nur
+Lesezugriff auf Container-Metadaten ist die langfristig bessere Architektur.
 
-- Docker - Required for running the API and accessing system status information
-- MongoDB - Required for MongoDB status monitoring
+## Wartung und Verifikation
 
-## License
+Abhaengigkeiten sind exakt versioniert. Dependabot prueft Python- und
+Docker-Abhaengigkeiten woechentlich. Die GitHub-Actions-Pipeline installiert
+die Abhaengigkeiten, fuehrt `pip-audit`, die Unit-Tests und einen frischen
+Docker-Build aus.
 
-This project is licensed under the MIT License.
+Lokal kann die Pruefung so wiederholt werden:
 
-## Contributing
-
-Contributions are welcome! Please follow the steps mentioned above.
+```bash
+python -m pip install -r requirements.txt pip-audit
+STATUS_SERVER_USERNAME=test-user STATUS_SERVER_PASSWORD=test-password \
+  python -m unittest discover -s tests -v
+pip-audit --requirement requirements.txt
+```

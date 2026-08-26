@@ -1,8 +1,8 @@
-﻿__pycache__
-*.pyc
-*.pyo
-*.pyd
-env/
-venv/
-.env
 .git
+.github
+.env
+.venv
+__pycache__
+*.py[cod]
+*.md
+tests
